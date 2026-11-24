@@ -1,11 +1,20 @@
 # fixverify — 修复验证闭环
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 基于 [OpenCodeReview CLI](https://github.com/alibaba/open-code-review)（`ocr` 命令）的本地独立工具，解决 AI/人工修 bug 的两个顽疾：
 
 - **修 A 坏 B**：修复引入衍生 bug（R 类问题）
 - **假修复**：声称已修，实际只修了一部分（✅/🟡/❌ 逐条判定）
 
 不依赖任何平台、不改任何项目代码。任何 git 仓库直接可用。
+
+> **fix-verify** — a fix-verification loop on the OpenCodeReview CLI.
+> Catches derivative bugs introduced by fixes (R-class) and fake fixes
+> (claimed-fixed-but-not), via an adversarial falsification protocol that
+> loops until every finding is VERIFIED with evidence. Works with any git
+> repo; ships as an installable skill for AI agents (opencode, Claude Code,
+> Cursor) and a plain CLI for humans.
 
 ## AI agent 集成（skill）
 
