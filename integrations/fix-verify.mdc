@@ -1,0 +1,96 @@
+---
+description: 修复验证闭环：修 bug 后、声明完成前，必须用 fixverify.py 复验（证伪协议），直到收敛。处理 bug 修复、验证修复、衍生 bug 时使用。
+globs:
+alwaysApply: false
+---
+
+# fix-verify：修复验证闭环
+
+## 触发条件
+
+- 修复了一个或多个 bug，准备声称"完成"之前
+- 用户要求验证修复 / 复验 / 防止衍生 bug
+- 用户给出了 bug 清单（评审意见、审计发现），需要逐条核验修复情况
+
+## 铁律（违反即失败）
+
+1. 修复代码后，未经 fix-verify **收敛**确认，禁止声称"修复完成"
+2. 报告里出现 `[PART]`（部分修复）或 `[FAIL]`（未修复），你的任务是**继续修**，
+   不是向用户解释"当前这样已经够了"
+3. `[R]` 行 = 修复引入的衍生 bug，与原 finding 同等优先级，必须修到收敛
+4. 报告"漏判"非零时，重跑一次 verify（agent 漏判 ≠ 没问题）
+5. 禁止顺手重构、改格式（最小 diff 纪律，防止扩大爆炸半径）
+
+## 前置
+
+- 工具：`D:\project\fixverify\fixverify.py`（Python 3.10+ 纯标准库，无第三方依赖）
+- `ocr` CLI 已安装且配置好 LLM（`ocr version` 验证；未配置则 `ocr config provider` / `ocr config model`）
+- 被审项目必须是 git 仓库
+
+## 工作流
+
+### 阶段 1：建立 findings（一个 bug 会话做一次）
+
+```powershell
+# 新增文件先进 git（否则 diff 里看不到），再初审当前 diff
+git -C <项目路径> add -A
+python D:\project\fixverify\fixverify.py review <项目路径>
+```
+
+已有 bug 清单（评审意见等）可写成一个 JSON 直接导入，不跑 CLI：
+
+```json
+{ "comments": [ { "path": "A.java", "start_line": 450, "end_line": 455,
+  "category": "bug", "severity": "medium", "content": "问题描述" } ] }
+```
+
+```powershell
+python D:\project\fixverify\fixverify.py import bugs.json
+```
+
+### 阶段 2：修复
+
+按 findings 逐条修。最小 diff，不顺手重构。
+
+### 阶段 3：复验（每轮必跑，循环直到收敛）
+
+```powershell
+python D:\project\fixverify\fixverify.py verify <项目路径>
+```
+
+读报告：
+
+| 标记 | 含义 | 动作 |
+|---|---|---|
+| `[PASS]` | VERIFIED，有证据 | 无 |
+| `[PART]` | 部分修复（证据缺/绕过没排/口径不一致） | 继续修 |
+| `[FAIL]` | NOT-FIXED | 继续修 |
+| `R ... <- F<n>` | 修复引入的衍生问题 | 必须修 |
+| `漏判` | 某条 finding 没有判定评论 | 重跑 verify |
+
+**收敛判据**：报告出现"收敛: 全部 findings 已 VERIFIED"。在此之前每轮循环：
+修复（针对 PART/FAIL/R 的具体内容）→ 再 verify。
+
+### 阶段 4：交付
+
+收敛后向用户汇报：每条 finding 的最终判定 + 证据（在 `.fixverify\rounds\` 里），
+然后才建议提交。
+
+## 运行注意
+
+- ocr 审查耗时几分钟到几十分钟：bash/终端调用要给足超时（工具默认 `--timeout 7200`）
+- 状态目录：默认当前工作目录的 `.fixverify/`；并行处理多个 bug 用 `--state` 分开
+- diff 可见性：工作区未提交改动直接可见；已提交用 `verify <proj> -- --commit HEAD`；
+  跨分支 `verify <proj> -- --from main --to fix-branch`
+- 控制 token/范围：`-- --max-tokens-budget 500000 --exclude "**/generated/**"`（原样透传 ocr）
+- 复验判定质量依赖 ocr 配置的模型，建议复验用较强模型（`ocr config model`）
+
+## 状态查询与人工干预
+
+```powershell
+python D:\project\fixverify\fixverify.py status          # 状态表 + 收敛判定
+python D:\project\fixverify\fixverify.py show F3         # 单条详情（含复验证据）
+python D:\project\fixverify\fixverify.py dismiss F5      # 误报人工关闭（不再进复验清单）
+python D:\project\fixverify\fixverify.py reopen F5       # 重新打开
+python D:\project\fixverify\fixverify.py selftest        # 工具自检（不依赖 ocr）
+```
