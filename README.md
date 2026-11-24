@@ -21,6 +21,14 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 # ③ 生成 integrations/fix-verify.mdc      → Cursor 用（复制到目标项目 .cursor/rules/）
 ```
 
+**新环境（新电脑/新编辑器）接入**，对 AI 说一句：
+
+> 访问 D:\project\fixverify（新机器先 git clone https://github.com/wang-c808/fixverify），按 AGENTS.md 把验证闭环加入你的工作流
+
+AI 会读 `AGENTS.md` 自举完成接入（前置检查 → install.ps1 → selftest），
+之后默认**自动模式**：开发完成、提交前自动初审 → 修复 → 复验到收敛；
+说"跳过验证"切手动模式。
+
 - **迁移到新电脑**：`git clone` 本仓库 → 确认 Python 3.10+ 和 ocr CLI → 重跑 `install.ps1`
   （会把新路径写进技能副本）
 - **改技能内容**：改 `skills/fix-verify/SKILL.md`（唯一源）→ 重跑 `install.ps1` 分发
