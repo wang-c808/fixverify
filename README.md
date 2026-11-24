@@ -140,6 +140,7 @@ python D:\project\fixverify\fixverify.py review D:\proj -- --max-tokens-budget 5
 
 ```
 fixverify/
+├── AGENTS.md               # AI agent 接入指南（新环境让 AI 读这个文件自举接入）
 ├── fixverify.py            # 主脚本（纯标准库，Python 3.10+）
 ├── rules/
 │   ├── review_rule.json    # 初审规则：通用清单 + 交互面检查 + severity 标准
@@ -149,6 +150,16 @@ fixverify/
 ├── integrations/fix-verify.mdc # Cursor 项目规则模板（生成物）
 └── README.md
 ```
+
+### 新环境接入（给 AI 的口令）
+
+对 AI 说一句即可，AI 会读 `AGENTS.md` 自举完成接入：
+
+> 访问 D:\project\fixverify（或 clone https://github.com/wang-c808/fixverify），
+> 按 AGENTS.md 把验证闭环加入你的工作流
+
+接入后默认**自动模式**：开发完成（准备提交前）自动初审 → 修复 → 复验到收敛；
+说"跳过验证"切手动模式。
 
 复验协议核心（`rules/verify_rule.json`，可按团队经验持续增补）：
 

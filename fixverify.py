@@ -364,6 +364,18 @@ STATUS_MARK = {
 }
 
 
+def warn_state_inside_project(state_dir: str, workdir: str) -> None:
+    """状态目录在被审项目内时警告：会污染项目 git status，且 .fixverify 可能混进 diff"""
+    try:
+        s = Path(state_dir).resolve()
+        w = Path(workdir).resolve()
+        if s == w or w in s.parents:
+            print("[fixverify] 警告：状态目录在被审项目内（会污染 git status / diff）。"
+                  "建议 --state 指到项目外，如 D:\\runs\\<任务名>")
+    except Exception:
+        pass
+
+
 def print_findings_table(findings: list[dict]) -> None:
     if not findings:
         print("  （无 findings）")
@@ -390,6 +402,7 @@ def convergence(findings: list[dict]) -> tuple[bool, list[dict]]:
 # ── 子命令 ───────────────────────────────────────────────────────────────────
 
 def cmd_review(args) -> None:
+    warn_state_inside_project(args.state, args.workdir)
     state = State(Path(args.state)).load()
     if state.findings and not args.force:
         sys.exit("[fixverify] 状态中已有 findings；追加用 --force，或先 verify / dismiss")
@@ -421,6 +434,7 @@ def cmd_import(args) -> None:
 
 
 def cmd_verify(args) -> None:
+    warn_state_inside_project(args.state, args.workdir)
     state = State(Path(args.state)).load()
     targets = state.open_findings()
     if not targets:
