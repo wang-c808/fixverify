@@ -1,4 +1,4 @@
-﻿# fixverify 技能安装脚本
+﻿﻿# fixverify 技能安装脚本
 # 用法：powershell -File install.ps1 [-ToolDir <fixverify目录>]
 # 作用：把 skills/fix-verify/SKILL.md 安装到各 agent 工具的技能目录，
 #       并把工具实际路径写进去（__FIXVERIFY_DIR__ 占位符）。
@@ -35,6 +35,9 @@ Install-Skill (Join-Path $HOME ".agents\skills") "agents 标准目录"
 
 # ② ~/.claude/skills：Claude Code
 Install-Skill (Join-Path $HOME ".claude\skills") "Claude Code"
+
+# ③ ~/.codex/skills：OpenAI Codex（$CODEX_HOME/skills）
+Install-Skill (Join-Path $HOME ".codex\skills") "Codex"
 
 # ③ Cursor：生成项目级规则模板（Cursor 规则按项目放在 .cursor/rules/，无法全局安装）
 $body = $content -replace '(?s)^---.*?---\s*', ''
